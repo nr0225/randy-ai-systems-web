@@ -1,0 +1,51 @@
+name: AI 專案詢價／數位商品需求
+description: 公開提出簡要需求；不要貼密碼、電話、Email、金鑰或私人資料。
+title: "[詢價] "
+labels: ["inquiry"]
+body:
+  - type: markdown
+    attributes:
+      value: "注意：此 GitHub Issue 公開可見，請勿填寫任何個人資料、商業機密、金鑰或私人聯絡方式。"
+  - type: dropdown
+    id: service
+    attributes:
+      label: 想詢問的產品／服務
+      options:
+        - AI 工班多模型協作 SOP（NT$1,980）
+        - 軍師中控 Starter Blueprint（NT$4,980）
+        - AI 自動化快速導入（NT$8,800 起）
+        - 多模型／Agent 中控顧問
+        - 其他
+    validations:
+      required: true
+  - type: textarea
+    id: request
+    attributes:
+      label: 你想解決什麼問題？
+      description: 僅寫公開且非敏感的任務需求。
+      placeholder: 現在的作業流程、希望減少的手動步驟、預期交付物
+    validations:
+      required: true
+  - type: dropdown
+    id: timeline
+    attributes:
+      label: 希望的開始時間
+      options:
+        - 立即
+        - 一週內
+        - 一個月內
+        - 尚在評估
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 希望怎麼驗收？
+      placeholder: 例如：給定範例輸入能正確產出報表；每天自動整理 1 次
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: 公開資料確認
+      options:
+        - label: 我沒有在這張公開需求單內提交個資、憑證或機密資料。
+          required: true
