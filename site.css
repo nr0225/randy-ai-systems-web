@@ -119,3 +119,8 @@ h2{font-size:clamp(24px,2.3vw,34px);letter-spacing:-.05em;line-height:1.25;margi
   .board .panel.full,.board-footnote{grid-column:1}
   .panel .large{font-size:22px}
 }
+
+/* Payment readiness is always disclosed before browsing product prices. */
+.launch-notice{margin:0 0 24px;padding:12px 16px;border:1px solid var(--line-strong);border-radius:12px;background:var(--surface);color:var(--muted);font-size:12px;line-height:1.8}
+.launch-notice strong{color:var(--ink)}
+@media(max-width:760px){.launch-notice{padding:12px;font-size:12px}}
