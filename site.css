@@ -98,3 +98,17 @@ h2{font-size:clamp(24px,2.3vw,34px);letter-spacing:-.05em;line-height:1.25;margi
 @media(max-width:380px){.board{display:flex;flex-direction:column}.panel.main-card{min-height:205px}.panel.full{width:100%}.board-footnote{text-align:left}}
 @media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#12131b;--surface:rgba(255,255,255,.095);--surface-strong:#282936;--ink:#f2efe8;--muted:#ccc8bf;--soft:#a8a39a;--line:rgba(255,255,255,.13);--line-strong:rgba(255,255,255,.21);--accent:#9998ff;--accent-soft:rgba(153,152,255,.14);--shadow:0 12px 30px rgba(0,0,0,.13);--card-inset:inset 0 1px 0 rgba(255,255,255,.09)}.sidebar{background:rgba(255,255,255,.045)}.mark{background:#f2efe8;color:#26231d}.side-nav a:first-child{color:#bdbdff}.mobile-top{background:rgba(18,19,27,.9)}.panel,.service,.steps article,.contact-panel{border:1px solid rgba(255,255,255,.12)}.panel.main-card{background:radial-gradient(100% 100% at 10% 5%,rgba(91,91,245,.2),transparent),var(--surface)}.flow-mini span{background:rgba(255,255,255,.07)}.cta{color:#141422;background:#a4a3ff;border-color:#a4a3ff}.cta:hover{background:#b2b1ff}.cta.secondary{color:var(--ink);background:var(--surface-strong)}.cta.secondary:hover{background:#343646}.panel .tag,.service-pill{background:rgba(155,154,255,.15);color:#c7c5ff}.panel-label .glyph{color:#b1afff}.spectrum span{background:#333341}.spectrum span:first-child{background:#9998ff}.spectrum span:nth-child(2){background:#6563bc}.service-foot a{color:#b8b7ff}.mobile-link{background:#f2efe8;color:#26231d}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important;animation:none!important}}
+
+/* Narrow viewports: prevent Bento content from forcing horizontal scrolling. */
+@media (max-width:760px){
+  .main,.hero,.hero-text,.board,.panel,.service,.contact-panel{min-width:0;max-width:100%}
+  .hero{grid-template-columns:minmax(0,1fr)}
+  .board{grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
+  .board .panel{overflow-wrap:anywhere}
+  .mobile-top{gap:10px}
+  .mobile-top .brand{min-width:0;flex:1}
+  .mobile-top .brand-name{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .mobile-link{flex:none;white-space:nowrap}
+  .flow-mini{gap:4px}
+  .flow-mini span{padding:5px 7px}
+}
