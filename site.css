@@ -112,3 +112,10 @@ h2{font-size:clamp(24px,2.3vw,34px);letter-spacing:-.05em;line-height:1.25;margi
   .flow-mini{gap:4px}
   .flow-mini span{padding:5px 7px}
 }
+
+@media(max-width:600px){
+  .board{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto}
+  .board .panel.main-card{grid-row:auto;min-height:210px}
+  .board .panel.full,.board-footnote{grid-column:1}
+  .panel .large{font-size:22px}
+}
