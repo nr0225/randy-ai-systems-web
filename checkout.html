@@ -78,8 +78,10 @@
     const line=byId("pending-msg");line.textContent="正在確認金流伺服器收到的付款通知。";
     show(byId("download-file"),false);
     try{
-      const url=new URL(API+"/api/orders/status");url.searchParams.set("id",order.id);url.searchParams.set("token",order.token);
-      const res=await fetch(url,{cache:"no-store",referrerPolicy:"no-referrer"});
+      const res=await fetch(API+"/api/orders/status",{
+        method:"POST",headers:{"Content-Type":"application/json"},cache:"no-store",referrerPolicy:"no-referrer",
+        body:JSON.stringify({orderId:order.id,lookupToken:order.token})
+      });
       const data=await res.json();if(!res.ok||!data.ok)throw new Error("訂單查詢暫不可用");
       if(data.status==="paid"){
         line.textContent="已收到付款確認。可以下載你購買的檔案。";
