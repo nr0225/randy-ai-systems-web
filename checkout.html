@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Randy AI Systems 數位商品付款及訂單查詢。">
+<title>收款與交付｜Randy AI Systems</title>
+<link rel="stylesheet" href="./site.css">
+<style>
+.checkout-layout{max-width:760px;margin:0 auto;padding:8vh 18px 12vh}
+.checkout-panel{padding:clamp(22px,4vw,40px);background:var(--surface-strong);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow)}
+.checkout-panel h1{font-size:clamp(27px,4vw,43px);max-width:none;letter-spacing:-.045em}
+.checkout-panel p{max-width:60ch;color:var(--muted)}
+.checkout-panel label{display:block;font-weight:650;font-size:13px;margin:20px 0 9px}
+.checkout-panel input,.checkout-panel select{display:block;width:100%;background:var(--surface-strong);color:var(--ink);border:1px solid var(--line-strong);border-radius:12px;min-height:46px;padding:10px 12px;font:inherit}
+.checkout-panel .cta{cursor:pointer;margin-top:20px}
+.checkout-panel .cta:disabled{cursor:not-allowed;opacity:.52;transform:none}
+.checkout-panel .state{padding:14px 16px;background:var(--accent-soft);border-radius:12px;font-size:13px;margin:15px 0;line-height:1.8}
+.checkout-panel .hidden{display:none!important}
+.checkout-panel small{color:var(--soft);font-size:12px;line-height:1.8}
+.checkout-panel a{color:#5b5bf5;text-decoration:underline}
+</style>
+</head>
+<body>
+<main class="checkout-layout">
+  <a href="./" class="brand" aria-label="返回 Randy AI Systems 首頁">
+    <span class="mark" aria-hidden="true">R/</span><span class="brand-name">Randy AI Systems<small>PAYMENT & DELIVERY</small></span>
+  </a>
+  <div class="checkout-panel" style="margin-top:26px">
+    <span class="kicker">安全結帳與數位交付</span>
+    <h1>付款前，先確認收款真的能運作。</h1>
+    <p class="state" id="readiness" role="status">正式收款尚未開啟；目前只提供資訊與詢價，不能進行付款。</p>
+
+    <section id="pending" class="hidden" aria-labelledby="pending-title">
+      <h2 id="pending-title">你的訂單狀態</h2>
+      <p id="pending-msg" role="status">正在檢查付款狀態…</p>
+      <button class="cta secondary" id="check-status" type="button">重新確認付款狀態</button>
+      <button class="cta hidden" id="download-file" type="button">下載已購買的 ZIP 檔</button>
+    </section>
+
+    <form id="checkout-form" class="hidden">
+      <label for="product">商品</label>
+      <select id="product" required>
+        <option value="ai-crew-sop">AI 工班多模型協作 SOP · NT$1,980</option>
+        <option value="strategist-blueprint">軍師中控 Starter Blueprint · NT$4,980</option>
+      </select>
+      <label for="buyer-email">接收訂單通知的電子郵件</label>
+      <input id="buyer-email" type="email" maxlength="254" autocomplete="email" required placeholder="your@email.com">
+      <div id="turnstile" style="margin-top:20px" aria-label="人機驗證"></div>
+      <p id="checkout-message" role="status"></p>
+      <button class="cta" id="pay-button" type="submit">前往綠界安全付款</button>
+      <p><small>本頁不接收信用卡卡號；會在同一分頁跳轉至綠界官方網站。付款完成後以綠界後端通知結果為準，不以跳轉頁面判斷成功。</small></p>
+    </form>
+    <p style="margin-top:30px"><small>若需要服務評估，請回到 <a href="./#contact">服務詢價</a>。本頁在正式驗收之前不會建立實際付款。</small></p>
+  </div>
+</main>
+<script>
+(()=>{
+  "use strict";
+  // Verified launch switch: never enable before production E2E and HTTPS acceptance.
+  const PUBLIC_CHECKOUT_LAUNCHED=false;
+  const API="https://randy-ai-pay.n-r0225.workers.dev";
+  const PAY_ACTION="https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5";
+  const SITEKEY="0x4AAAAAAGE1JQeitvoHXlEj";
+  const KEY="randy:payment:current-order";
+  const byId=id=>document.getElementById(id);
+  const state=byId("readiness"),form=byId("checkout-form"),pending=byId("pending");
+  const saved=()=>{try{return JSON.parse(sessionStorage.getItem(KEY)||"null")}catch{return null}};
+  const show=(el,yes)=>el.classList.toggle("hidden",!yes);
+  const itemNames={"ai-crew-sop":"ai-crew-sop-v1.zip","strategist-blueprint":"strategist-blueprint-v1.zip"};
+  let ready=false,widgetId=null;
+
+  async function checkOrder(){
+    const order=saved();if(!order||typeof order.id!=="string"||typeof order.token!=="string")return;
+    show(pending,true);
+    const line=byId("pending-msg");line.textContent="正在確認金流伺服器收到的付款通知。";
+    show(byId("download-file"),false);
+    try{
+      const res=await fetch(API+"/api/orders/status",{
+        method:"POST",headers:{"Content-Type":"application/json"},cache:"no-store",referrerPolicy:"no-referrer",
+        body:JSON.stringify({orderId:order.id,lookupToken:order.token})
+      });
+      const data=await res.json();if(!res.ok||!data.ok)throw new Error("訂單查詢暫不可用");
+      if(data.status==="paid"){
+        line.textContent="已收到付款確認。可以下載你購買的檔案。";
+        show(byId("download-file"),true);
+      }else if(data.status==="pending"){
+        line.textContent="尚未收到付款完成通知。請勿重複付費；完成付款後可重新查詢。";
+      }else{
+        line.textContent="訂單狀態："+String(data.status).slice(0,30)+"，如有疑問請聯絡商家。";
+      }
+    }catch{line.textContent="訂單暫時查不到狀態，稍後再查詢，請勿重複付款。"}
+  }
+  async function download(){
+    const order=saved();if(!order)return;
+    const btn=byId("download-file");btn.disabled=true;btn.textContent="正在驗證並下載";
+    try{
+      const res=await fetch(API+"/api/orders/download",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderId:order.id,lookupToken:order.token}),cache:"no-store"});
+      if(!res.ok)throw new Error("尚未取得可下載的有效訂單");
+      const blob=await res.blob(),objectUrl=URL.createObjectURL(blob);
+      const a=document.createElement("a");a.href=objectUrl;a.download=itemNames[order.productId]||"randy-ai-product.zip";document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(objectUrl),1000);
+      byId("pending-msg").textContent="檔案已送往瀏覽器下載；請確認 ZIP 是否完整。";
+    }catch{byId("pending-msg").textContent="目前無法交付檔案，請保留交易紀錄，不要再次付款。"}
+    finally{btn.disabled=false;btn.textContent="下載已購買的 ZIP 檔";}
+  }
+  async function startWidget(){
+    await new Promise((resolve,reject)=>{
+      if(window.turnstile)return resolve();
+      const s=document.createElement("script");s.src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";s.async=true;s.onload=resolve;s.onerror=reject;document.head.append(s);
+    });
+    widgetId=turnstile.render("#turnstile",{sitekey:SITEKEY,theme:"auto"});
+  }
+  async function init(){
+    const hasOrder=!!saved();show(pending,hasOrder);if(hasOrder)checkOrder();
+    if(!PUBLIC_CHECKOUT_LAUNCHED){state.textContent="結帳尚未通過正式環境驗收，暫停收款；請勿轉帳或付款。";return}
+    try{
+      const res=await fetch(API+"/health",{cache:"no-store"}),data=await res.json();
+      if(!res.ok||data.mode!=="production"||data.checkoutReady!==true)throw new Error("未開通");
+      ready=true;show(form,true);state.textContent="已完成正式收款驗收，可透過綠界官方付款。";
+      const param=new URLSearchParams(location.search).get("product");
+      if(Object.hasOwn(itemNames,param))byId("product").value=param;
+      await startWidget();
+    }catch{state.textContent="收款服務尚未通過驗收，暫時不接受付款。"}
+  }
+  form.addEventListener("submit",async e=>{
+    e.preventDefault();if(!ready||!PUBLIC_CHECKOUT_LAUNCHED)return;
+    const btn=byId("pay-button");btn.disabled=true;
+    const msg=byId("checkout-message");msg.textContent="正在建立安全付款單…";
+    try{
+      const t=window.turnstile?.getResponse(widgetId);
+      if(!t)throw new Error("請先通過人機驗證");
+      const res=await fetch(API+"/api/checkout",{method:"POST",headers:{"Content-Type":"application/json"},cache:"no-store",
+        body:JSON.stringify({productId:byId("product").value,email:byId("buyer-email").value.trim(),turnstileToken:t})});
+      const data=await res.json();
+      if(!res.ok||!data.ok||data.action!==PAY_ACTION||!data.fields||!data.orderId||!data.lookupToken)
+        throw new Error("尚未建立有效付款單");
+      sessionStorage.setItem(KEY,JSON.stringify({id:data.orderId,token:data.lookupToken,productId:byId("product").value}));
+      const redirectForm=document.createElement("form");redirectForm.method="POST";redirectForm.action=PAY_ACTION;
+      for(const [k,v]of Object.entries(data.fields)){const input=document.createElement("input");input.type="hidden";input.name=k;input.value=String(v);redirectForm.append(input);}
+      document.body.append(redirectForm);redirectForm.submit();
+    }catch(error){msg.textContent=error.message||"付款暫時無法開始，請勿重複提交。";btn.disabled=false;window.turnstile?.reset(widgetId);}
+  });
+  byId("check-status").addEventListener("click",checkOrder);
+  byId("download-file").addEventListener("click",download);
+  init();
+})();
+</script>
+</body>
+</html>
